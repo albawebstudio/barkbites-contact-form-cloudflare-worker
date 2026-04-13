@@ -5,8 +5,8 @@ export default {
     async fetch(request, env, ctx) {
         // CORS Configuration
         const origin = request.headers.get('Origin');
-        const allowedOrigins = process.env.ALLOWED_ORIGINS
-            ? process.env.ALLOWED_ORIGINS.split(',').map(d => d.trim()).filter(Boolean)
+        const allowedOrigins = env.ALLOWED_ORIGINS
+            ? env.ALLOWED_ORIGINS.split(',').map((d) => d.trim()).filter(Boolean)
             : [];
         const isAllowedOrigin = allowedOrigins.includes(origin);
 

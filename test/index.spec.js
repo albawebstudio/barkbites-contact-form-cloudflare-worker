@@ -15,4 +15,15 @@ describe('contact form worker', () => {
 		const response = await SELF.fetch('http://example.com', { method: 'GET' });
 		expect(response.status).toBe(405);
 	});
+
+	it('handles OPTIONS preflight without referencing Node globals', async () => {
+		const request = new Request('http://example.com', {
+			method: 'OPTIONS',
+			headers: { Origin: 'https://example.com' },
+		});
+		const ctx = createExecutionContext();
+		const response = await worker.fetch(request, env, ctx);
+		await waitOnExecutionContext(ctx);
+		expect(response.status).toBe(204);
+	});
 });
