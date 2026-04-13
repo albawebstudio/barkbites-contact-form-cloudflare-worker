@@ -1,77 +1,65 @@
 /**
- * Handles sending email notifications and auto-replies.
- * Assumes `env.SEND_EMAIL` is a function binding to a Cloudflare Worker Email service or similar.
+ * Sends admin notification + client auto-reply via the Cloudflare `send_email` binding.
+ * `env.SEND_EMAIL.send()` resolves when queued or throws on failure (no fetch-style `.ok`).
  */
 
-export async function sendEmails(env, toEmail, subject, notificationHtml, clientReplyMessage, corsHeaders) {
-    try {
-        const headers = {
-            'Content-Type': 'application/json',
-        };
+export async function sendEmails(env, toEmail, subject, notificationHtml, clientReplyMessage, responseHeaders = {}) {
+	const headers = {
+		'Content-Type': 'application/json',
+		...responseHeaders,
+	};
 
-        // Notification to you
-        const notificationPayload = {
-            from: { email: 'FROM_EMAIL', name: 'FROM_NAME' },
-            to: [{ email: 'aalba@albaweb.dev' }],
-            subject: `📬 New Contact Form Submission - ${subject}`,
-            html: notificationHtml,
-        };
+	const fromEmail = env.FROM_EMAIL;
+	const fromName = env.FROM_NAME || 'Contact Form';
+	const ownerInbox = env.OWNER_CONTACT_EMAIL || fromEmail;
 
-        // Auto-reply to client
-        const clientReplyPayload = {
-            from: { email: 'aalba@albaweb.dev', name: 'Andrew Alba' },
-            to: [{ email: toEmail, name: 'Client' }],
-            subject: `✅ Thank you for reaching out, ${toEmail}! - Re: ${subject}`,
-            html: clientReplyMessage,
-        };
+	if (!fromEmail) {
+		console.error('sendEmails: FROM_EMAIL is not configured');
+		return new Response(
+			JSON.stringify({ error: 'Server misconfiguration', message: 'FROM_EMAIL is not set' }),
+			{ status: 500, headers }
+		);
+	}
+	if (!ownerInbox) {
+		console.error('sendEmails: no admin inbox (set OWNER_CONTACT_EMAIL or FROM_EMAIL)');
+		return new Response(
+			JSON.stringify({ error: 'Server misconfiguration', message: 'No notification recipient configured' }),
+			{ status: 500, headers }
+		);
+	}
 
-        // Send both emails in parallel
-        const [notificationRes, clientReplyRes] = await Promise.all([
-            /*fetch('https://send.api.mailtrap.io/api/send', {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(notificationPayload),
-            }),*/
+	const notificationPayload = {
+		from: { email: fromEmail, name: fromName },
+		to: [{ email: ownerInbox }],
+		subject: `📬 New Contact Form Submission - ${subject}`,
+		html: notificationHtml,
+	};
 
-            // Or send a new email using the send_email binding
-            env.SEND_EMAIL.send(notificationPayload),
-            /*fetch('https://send.api.mailtrap.io/api/send', {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(clientReplyPayload),
-            }),*/
-            env.SEND_EMAIL.send(clientReplyPayload),
-        ]);
+	const clientReplyPayload = {
+		from: { email: fromEmail, name: fromName },
+		to: [{ email: toEmail, name: 'Client' }],
+		subject: `✅ Thank you for reaching out, ${toEmail}! - Re: ${subject}`,
+		html: clientReplyMessage,
+	};
 
-        // Handle failures
-        if (!notificationRes.ok || !clientReplyRes.ok) {
-            console.error('Notification:', await notificationRes.text());
-            console.error('Client Reply:', await clientReplyRes.text());
-            return new Response('Failed to send email', {
-                status: 500,
-                headers: corsHeaders,
-            });
-        }
+	try {
+		await Promise.all([env.SEND_EMAIL.send(notificationPayload), env.SEND_EMAIL.send(clientReplyPayload)]);
 
-        // Success
-        return new Response(
-            JSON.stringify({
-                success: true,
-                message: 'Form submitted successfully and confirmation email sent!',
-            }),
-            {
-                status: 200,
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...corsHeaders,
-                },
-            }
-        );
-    } catch (err) {
-        console.error(err);
-        return new Response(JSON.stringify({ error: 'Unexpected error' }), {
-            status: 500,
-            headers: corsHeaders,
-        });
-    }
+		return new Response(
+			JSON.stringify({
+				success: true,
+				message: 'Form submitted successfully and confirmation email sent!',
+			}),
+			{ status: 200, headers }
+		);
+	} catch (err) {
+		console.error('sendEmails failed:', err);
+		return new Response(
+			JSON.stringify({
+				error: 'Email delivery failed',
+				message: 'Could not send email. Please try again later.',
+			}),
+			{ status: 500, headers }
+		);
+	}
 }

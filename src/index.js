@@ -132,7 +132,6 @@ export default {
             };
 
             const errors = [];
-            let notificationContent = '';
 
             // Form Type Handling
             switch (formType) {
@@ -147,8 +146,6 @@ export default {
                     if (subjectError) errors.push(subjectError);
                     const messageError = validateLength('Message', messageBody, 10);
                     if (messageError) errors.push(messageError);
-
-                    notificationContent = `New Message\n\nName: ${sanitize(name)}\nEmail: ${sanitize(email)}\nPhone: ${phone ? sanitize(phone) : 'N/A'}\nSubject: ${sanitize(subject)}\nMessage: ${sanitize(messageBody)}`;
 
                     const replyTemplateKey = env.CLIENT_REPLY_TEMPLATE_KEY || 'contact';
                     const payload = {
@@ -172,9 +169,11 @@ export default {
                         message: sanitize(messageBody),
                         replySubject: `Re: ${sanitize(subject)}`,
                     });
-                    const response = await sendEmails(env, email, _subject, notificationHtml, clientReply, corsHeaders);
-                    console.log('Response:', response);
-                    break;
+                    if (errors.length) break;
+                    return await sendEmails(env, email, _subject, notificationHtml, clientReply, {
+                        ...corsHeaders,
+                        ...rateLimitHeaders,
+                    });
                 }
 
                 case 'recruiter_query': {
@@ -188,7 +187,6 @@ export default {
                     const companyNameError = validateLength('Company name', companyName, 2);
                     if (companyNameError) errors.push(companyNameError);
 
-                    notificationContent = `Recruiter Query\n\nRecruiter: ${sanitize(recruiterName)}\nCompany: ${sanitize(companyName)}\nEmail: ${sanitize(recruiterEmail)}\nLocation: ${roleLocation ? sanitize(roleLocation) : 'N/A'}\nRole: ${sanitize(roleTitle)}\nDescription: ${roleDescription ? sanitize(roleDescription) : 'N/A'}\nSkills: ${keySkills ? sanitize(keySkills) : 'N/A'}\nJD Link: ${linkToJD ? sanitize(linkToJD) : 'N/A'}`;
                     const replyTemplateKey = env.CLIENT_REPLY_TEMPLATE_KEY || 'contact';
                     const payload = {
                         name: recruiterName,                 // Client's name (string)
@@ -220,9 +218,11 @@ export default {
                             .join('\n\n'),
                         replySubject: `Re: ${sanitize(roleTitle)} (${sanitize(companyName)})`,
                     });
-                    const response = await sendEmails(env, recruiterEmail, subject, notificationHtml, clientReply, corsHeaders);
-                    console.log('Response:', response);
-                    break;
+                    if (errors.length) break;
+                    return await sendEmails(env, recruiterEmail, subject, notificationHtml, clientReply, {
+                        ...corsHeaders,
+                        ...rateLimitHeaders,
+                    });
                 }
 
                 default:
@@ -240,32 +240,20 @@ export default {
                 );
             }
 
-            // Here you would implement your actual notification logic
-            // For now, we'll just log it
-            console.log('Notification to be sent:', notificationContent);
-
-            // Simulate sending the notification
-            try {
-                // Replace with actual notification sending code
-                // await sendNotification(notificationContent);
-
-                return new Response(
-                    JSON.stringify({ success: true, message: 'Form submitted successfully' }),
-                    { status: 200, headers: { ...corsHeaders, ...rateLimitHeaders } }
-                );
-            } catch (notificationError) {
-                console.error('Notification failed:', notificationError);
-                return new Response(
-                    JSON.stringify({ error: 'Notification failed', message: 'Form was validated but we failed to process it' }),
-                    { status: 500, headers: { ...corsHeaders, ...rateLimitHeaders } }
-                );
-            }
+            console.error('contact worker: post-switch path without handler (logic bug)');
+            return new Response(
+                JSON.stringify({ error: 'Internal server error', message: 'An unexpected error occurred' }),
+                {
+                    status: 500,
+                    headers: { 'Content-Type': 'application/json', ...corsHeaders, ...rateLimitHeaders },
+                }
+            );
 
         } catch (error) {
             console.error('Server error:', error);
             return new Response(
                 JSON.stringify({ error: 'Internal server error', message: 'An unexpected error occurred' }),
-                { status: 500, headers: corsHeaders }
+                { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
             );
         }
     },
