@@ -1,0 +1,26 @@
+{
+	"name": "contact-form-cloudflare-worker",
+	"version": "1.0.0",
+	"private": false,
+	"scripts": {
+		"deploy": "wrangler deploy",
+		"dev": "wrangler dev",
+		"start": "wrangler dev",
+		"test": "vitest",
+		"email:build": "mjml ./emails/*.mjml -o ./src/templates/",
+		"email:watch": "mjml -w ./emails/*.mjml -o ./src/templates/"
+	},
+	"devDependencies": {
+		"@cloudflare/vitest-pool-workers": "^0.14.3",
+		"mjml": "^4.18.0",
+		"vitest": "^4.1.4",
+		"wrangler": "^4.81.1"
+	},
+	"pnpm": {
+		"allowBuilds": {
+			"esbuild": true,
+			"sharp": true,
+			"workerd": true
+		}
+	}
+}

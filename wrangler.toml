@@ -1,0 +1,19 @@
+name = "barkbites-contact-form-worker"  # Add this line
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+
+[observability]
+enabled = true
+
+[[send_email]]
+name = "SEND_EMAIL"
+
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true
+
+[[kv_namespaces]]
+binding = "BB_RATE_LIMIT_KV"
+id = "17fc04a4821b4a2ebcce1cbece9b5ef9"
+preview_id = "17fc04a4821b4a2ebcce1cbece9b5ef9"

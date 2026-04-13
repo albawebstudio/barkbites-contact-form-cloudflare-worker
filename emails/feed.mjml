@@ -1,0 +1,32 @@
+<mjml>
+
+    <mj-head>
+
+        <mj-attributes>
+            <mj-text align="center" color="#555"/>
+        </mj-attributes>
+
+    </mj-head>
+
+    <mj-body background-color="#000">
+
+        <mj-include path="common/header.mjml"/>
+
+        <mj-section background-color="#e2e8f0">
+
+            <mj-column>
+                <mj-text align="center" color="#ff9914" font-size="24px" font-weight="700">
+                    Great News!
+                </mj-text>
+                <mj-text align="left">
+                    <strong>{{ name }}</strong> fed the dogs at approximately {{ formattedDate }}.
+                </mj-text>
+            </mj-column>
+
+        </mj-section>
+
+        <mj-include path="common/footer.mjml"/>
+
+    </mj-body>
+
+</mjml>

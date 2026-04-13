@@ -1,0 +1,12 @@
+<mj-section>
+
+  <mj-column>
+    <mj-text>
+      &copy; {{ currentYear }} BarkBites
+    </mj-text>
+    <mj-text font-size="8px" font-weight="200" color="#29bf12">
+      A product proudly built in Minnesota
+    </mj-text>
+  </mj-column>
+
+</mj-section>
