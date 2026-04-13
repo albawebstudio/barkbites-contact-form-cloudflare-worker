@@ -71,7 +71,7 @@ describe('clientReplyTemplate registry', () => {
 		expect(html).toContain('mailto:u%40example.com');
 		expect(html).toContain('subject=Subj%20%26%20%22ok%22');
 		expect(html).not.toContain('{{ currentYear }}');
-		expect(html).toContain('MJ Collective LLC');
+		expect(html).toContain('BarkBites');
 		expect(html).toContain(String(new Date().getFullYear()));
 	});
 });

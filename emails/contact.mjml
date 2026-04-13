@@ -26,14 +26,20 @@
                     <strong>Email:</strong>
                     {{ email }}
                 </mj-text>
+                <mj-raw>{{#if phone }}</mj-raw>
+                <mj-text align="left">
+                    <strong>Phone:</strong>
+                    {{ phone }}
+                </mj-text>
+                <mj-raw>{{/if}}</mj-raw>
                 <mj-text align="left">
                     <strong>Message:</strong>
                 </mj-text>
                 <mj-text align="left">
                     {{ message }}
                 </mj-text>
-                <mj-button href="mailto:{{ email }}" width="100%" inner-padding="25px" border-radius="6px"
-                           background-color="#ff9914" font-size="22px" font-weight="500" color="#fff">Reply to message
+                <mj-button href="{{ mailtoHref }}" width="100%" inner-padding="25px" border-radius="6px"
+                           background-color="#2d2d57" font-size="22px" font-weight="500" color="#fff">Reply to message
                 </mj-button>
             </mj-column>
 
